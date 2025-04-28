@@ -55,25 +55,33 @@ def from_cc_csv(csv_file):
   return df
 
 
-def chequing():
+def rbc_chequing():
   csv_files = glob.glob("rbc_pdfs/**/*.csv", recursive=True)
   dfs = [from_csv(f) for f in csv_files]
   df = pd.concat(dfs, ignore_index=True)
+  df["Amount"] = (df["Withdrawals"] * -1.0) + df["Deposit"]
+  df.drop(columns=["Withdrawals", "Deposit"], inplace=True)
+  df = df[["Date", "Description", "Amount", "Balance"]]
   df.sort_values(by=["Date"], ascending=True, kind="mergesort", inplace=True)
   df.to_csv("rbc_chequing.csv", index=False)
 
 
-def mastercard():
+def rbc_mastercard():
   cc_csv_files = glob.glob("rbc_cc_pdfs/**/*.csv", recursive=True)
   dfs = [from_cc_csv(f) for f in cc_csv_files]
   df = pd.concat(dfs, ignore_index=True)
+  # Make purchases on credit card negative, credits positive.
+  df["Amount"] = df["Amount"] * -1
+  # Filter out automatic payment to pay off credit card balance.
+  df = df[df["Activity Description"] != "AUTOMATIC PAYMENT - THANK YOU"]
   df.sort_values(by=["Transaction Date"],
                  ascending=True,
                  kind="mergesort",
                  inplace=True)
+  df.rename(columns={"Activity Description": "Description"}, inplace=True)
   df.to_csv("rbc_mastercard.csv", index=False)
 
 
 if __name__ == "__main__":
-  # chequing()
-  mastercard()
+  rbc_chequing()
+  rbc_mastercard()
