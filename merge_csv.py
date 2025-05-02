@@ -42,6 +42,7 @@ def from_csv(csv_file):
   clean_date_column(df, "Date")
   df["Withdrawals"] = df["Withdrawals"].astype(float)
   df["Deposit"] = df["Deposit"].astype(float)
+  df.fillna(value={"Withdrawals": 0.0, "Deposit": 0.0}, inplace=True)
   df["Description"] = df["Description"].apply(lambda d: d.replace("\n", " "))
   return df
 
